@@ -83,7 +83,66 @@ def train_network(network, train_loader, epoch_num):
             )
 
 
-def test(network, test_loader):
+def test_network(network, test_loader):
     network.eval()
     test_loss = 0
     correct = 0
+
+    with torch.no_grad():  # disable gradient calculation
+
+        # 1. run the test
+        for data, target in test_loader:
+            # run the test
+            output = network(data)
+
+            # get error
+            test_loss += F.nll_loss(output, target, size_average=False).item()
+
+            # get prediction
+            pred = output.data.max(1, keepdim=True)[1]
+
+            # get nuumber of correct prediction
+            correct += pred.eq(target.data.view_as(pred)).sum()
+
+        # 2. get error
+        test_loss /= len(test_loader.dataset)
+
+        # 3. return the list of error for each image (total 1000)
+        test_losses = []
+        test_losses.append(test_loss)
+
+        print('\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss, correct, len(test_loader.dataset),
+            100. * correct / len(test_loader.dataset)))
+
+        return test_losses
+
+
+# 1. make network reproducible
+torch.manual_seed(42)
+torch.backends.cudnn.enabled = False
+
+# 2. load and plot data
+train_loader = loadData(is_train=True)
+test_loader = loadData(is_train=False)
+plotData(train_loader)
+plotData(test_loader)
+
+# 3. create network model
+network = NeuralNetwork()
+
+# 4. train and test network model
+epoch_num = 5
+# create list to plot the number of training samples on x axis, and the scores
+test_losses = []
+test_counter = [i*len(train_loader.dataset) for i in range(epoch_num + 1)]
+
+for epoch in range(1, epoch_num + 1):
+    train_counter, train_losses = train_network(
+        network, train_loader, epoch)
+    test_losses = test_network(network, test_loader)
+
+    # 5. plot result
+print("test counter shape:", len(test_counter), "value:", test_counter)
+print("test loss shape:", len(test_losses), "value:", test_losses)
+plot_result(train_counter, train_losses, test_counter, test_losses)
