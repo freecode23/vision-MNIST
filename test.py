@@ -25,7 +25,6 @@ def loadData():
         batch_size=batch_test,
         shuffle=False)
 
-
     print("examining test_data")
     # doing enumerate on test loader will give me batch index and the test loader itself is returning the images(example_data) and the label for it (example_target)
     examples = enumerate(test_loader)
@@ -36,3 +35,55 @@ def loadData():
 
 
 loadData()
+
+
+def train_network(network, train_loader, epoch_num):
+    # 1. train mode
+    network.train()
+
+    # For each batch
+    for batch_idx, (data, target) in enumerate(train_loader):
+        # 2. Manually set the gradients to zero using optimizer.zero_grad() since PyTorch by default accumulates gradients.
+        # use gradient descent
+        learning_rate = 0.1
+        momentum = 0.5
+        optimizer = optim.SGD(network.parameters(), lr=learning_rate,
+                              momentum=momentum)
+
+        optimizer.zero_grad()
+        output = network(data)
+
+        # 3. compute a negative log-likelihodd (nll) loss between the output and the ground truth label
+        loss = F.nll_loss(output, target)
+        loss.backward()
+
+        # 4. The backward() call we now collect a new set of gradients
+        # which we propagate back into each of the network's parameters using optimizer.step()
+
+        optimizer.step()
+
+        # 5. what is log_interval?
+        print_interval = 10
+
+        if batch_idx % print_interval == 0:
+            # print
+            print('Train Epoch: {}, batch index:{} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch_num,
+                batch_idx,
+                batch_idx * len(data),
+                len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), loss.item()))
+
+            train_losses = []
+            train_counter = []
+
+            train_losses.append(loss.item())
+            train_counter.append(
+                (batch_idx*64) + ((epoch_num-1) * len(train_loader.dataset))
+            )
+
+
+def test(network, test_loader):
+    network.eval()
+    test_loss = 0
+    correct = 0
