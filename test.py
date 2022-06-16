@@ -146,3 +146,52 @@ for epoch in range(1, epoch_num + 1):
 print("test counter shape:", len(test_counter), "value:", test_counter)
 print("test loss shape:", len(test_losses), "value:", test_losses)
 plot_result(train_counter, train_losses, test_counter, test_losses)
+
+
+def main(argv):
+
+    # 1. make network reproducible
+    torch.manual_seed(42)
+    torch.backends.cudnn.enabled = False
+
+    # 2. load and plot data
+    train_loader = loadData(is_train=True)
+    test_loader = loadData(is_train=False)
+    plotData(train_loader)
+    plotData(test_loader)
+
+    # 3. create network model
+    network = NeuralNetwork()
+
+    # 4. train and test network model
+    epoch_num = 5
+
+    # create list to plot the number of training samples on x axis, and the scores
+    train_counter_per_epoch = []
+    train_counter = []
+    train_losses = []
+
+    test_losses = []
+    test_counter = [i * len(train_loader.dataset)
+                    for i in range(epoch_num + 1)]
+    test_losses.append(0)
+
+    for epoch in range(1, epoch_num + 1):
+        # - train and get counter and loss list
+        train_counter_per_epoch, train_loss_per_epoch = train_network(
+            network, train_loader, epoch)
+
+        train_counter.append(train_counter_per_epoch)
+        train_losses.append(train_loss_per_epoch)
+
+        # test
+        test_losses.append(test_network(network, test_loader))
+
+    # 5. flatten the two arrays
+    # for all the sublist in regular list,
+    # get all the sub item in sublist
+    flat_train_counter = [single_item for sublist in train_counter
+                          for single_item in sublist]
+
+    flat_train_losses = [single_item for sublist in train_losses
+                         for single_item in sublist]
