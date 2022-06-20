@@ -195,3 +195,79 @@ def main(argv):
 
     flat_train_losses = [single_item for sublist in train_losses
                          for single_item in sublist]
+
+
+def create_greek_alphabet_folder():
+    all_filenames = []
+    for (dirpath, dirnames, filenames) in walk("images/"):
+        print("Directory path> ", dirpath)
+        if(dirpath == "images/greek"):
+            # get unique filenames
+            all_filenames = filenames
+
+
+    # create folder
+    greek_alphabet = []
+
+    for filename in all_filenames:
+        # split
+        letter = filename.split("_")[0]
+        greek_alphabet.append(letter)
+
+    # make the list unique
+    greek_alphabet = list(set(greek_alphabet))
+
+    print("unique alphabet:", greek_alphabet)
+
+    for alphabet in greek_alphabet:
+        os.mkdir("images/greek" + alphabet)
+
+
+data_filename = 'greek.csv'
+target_filename = 'greek_target.csv'
+
+if(!exists(pdata_filename)):
+
+    # 1. load the data
+    data, target = next(iter(dataloader))
+    csv_np = np.array([])
+    
+    
+    # 2. create empty csv file with the headers
+    header_list = list(map(str, range(0, 784)))
+    header_str = ','.join(header_list)
+    with open(data_filename, 'a') as csvfile:
+        np.savetxt(csvfile, [], header=header_str,
+                delimiter=',', fmt='%s', comments='')
+    
+    with open(target_filename, 'a') as csvtargetfile:
+        np.savetxt(csvtargetfile, [], header="category",
+                delimiter=',', fmt='%s', comments='')
+    
+    # 3. loop through each image and append to csv
+    for i in range(len(data)):
+        print("\nindex:>>>>", i)
+        # - display the image info
+        img_mat = data[i][0]
+        ground_truth = target[i].numpy()
+        print("ground truth:", Alphabet(ground_truth))
+        plt.imshow(img_mat, cmap="gray", interpolation="none")
+        plt.show()
+    
+        # - create a new csv row
+        csv_row_np = np.array([])
+    
+        # - for each row in a single image
+        for img_row in img_mat:
+        
+            # - append it as a single row
+            img_row_np = img_row.numpy()
+            csv_row_np = np.append(csv_row_np, [img_row_np])
+    
+        # - append this image row and target in csv file
+        with open(data_filename, 'a') as csvfile:
+            np.savetxt(csvfile, [csv_row_np], delimiter=',', fmt='%s', comments='')
+    
+        with open(target_filename, 'a') as csvtargetfile:
+            np.savetxt(csvtargetfile, [ground_truth],
+                    delimiter=',', fmt='%s', comments='')
